@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Money Venture</title>
+<meta name="description" content="แปลงราคาสินค้าเป็นเวลาทำงานที่ต้องแลก">
+<meta name="theme-color" content="#FFF5F8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Money Venture">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&family=Mitr:wght@500;600&display=swap">
+<style>
+/* Pastel piggy-bank-meets-cat palette, matching the Money Venture Figma file */
+:root {
+  --bg: #FFF5F8; --surface: #FFFFFF; --ink: #5B4565; --muted: #8F7C98;
+  --primary: #EC6F9E; --primary-soft: #FFE3EE; --coin: #FFCF70; --coin-soft: #FFF3D6;
+  --line: #F6E4EC; --lavender: #ECE4FF; --mint: #D3F3E6; --sky: #DCEEFF; --danger: #D9486F;
+  --display: "Mitr", "IBM Plex Sans Thai Looped", system-ui, sans-serif;
+  --body: "IBM Plex Sans Thai Looped", "Mitr", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; -webkit-tap-highlight-color: transparent; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.app { position: relative; max-width: 440px; min-height: 100dvh; margin: 0 auto; overflow: hidden; background: var(--bg);
+  padding-top: env(safe-area-inset-top, 0px); }
+.deco { position: absolute; border-radius: 50%; pointer-events: none; z-index: 0; }
+.d1 { width: 220px; height: 220px; top: -84px; right: -66px; background: var(--mint); }
+.d2 { width: 96px; height: 96px; top: 330px; left: -46px; background: var(--sky); }
+.d3 { width: 120px; height: 120px; top: 600px; right: -60px; background: var(--lavender); opacity: .8; }
+.spark { position: absolute; pointer-events: none; z-index: 0; }
+.view { position: relative; z-index: 1; display: grid; gap: 16px; padding: 20px 20px calc(110px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.view.no-tabs { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+
+h1, h2, .num { font-family: var(--display); font-weight: 600; margin: 0; text-wrap: balance; }
+h1 { font-size: 26px; line-height: 1.3; }
+.brand { font-family: var(--display); font-weight: 600; color: var(--primary); font-size: 14px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+p { margin: 0; }
+
+.card { background: var(--surface); border-radius: 28px; padding: 20px; display: grid; gap: 14px; position: relative; overflow: hidden; }
+.card.lav { background: var(--lavender); }
+.card.coin { background: var(--coin-soft); }
+.card.mint { background: var(--mint); }
+
+.btn { border: 0; border-radius: 18px; padding: 15px 18px; font-weight: 600; font-size: 16px; background: var(--primary); color: #fff; width: 100%;
+  transition: transform .12s ease, filter .12s ease; }
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.secondary { background: var(--surface); color: var(--primary); box-shadow: inset 0 0 0 2px var(--primary-soft); }
+.btn.ghost { background: transparent; color: var(--muted); font-weight: 500; font-size: 15px; padding: 10px; }
+.btn.small { width: auto; padding: 6px 12px; border-radius: 12px; font-size: 13px; }
+.row { display: flex; gap: 10px; align-items: center; }
+.row > .grow { flex: 1; min-width: 0; }
+.between { justify-content: space-between; }
+
+.topbar { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.icon-btn { border: 0; background: none; padding: 6px; margin-left: -6px; border-radius: 12px; display: grid; place-items: center; }
+
+.field { display: grid; gap: 6px; }
+.field label, .label { font-size: 13px; font-weight: 500; color: var(--muted); }
+.input { display: flex; align-items: baseline; gap: 8px; background: var(--bg); border-radius: 16px; padding: 10px 16px; border: 2px solid transparent; }
+.input:focus-within { border-color: var(--primary-soft); }
+.input input { border: 0; background: none; outline: none; width: 100%; min-width: 0; font-family: var(--display); font-weight: 600; font-size: 22px; padding: 0; }
+.input input[type="time"] { font-size: 20px; }
+.input .unit { color: var(--muted); font-size: 14px; white-space: nowrap; }
+.error { color: var(--danger); font-size: 13px; font-weight: 500; }
+
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; background: var(--bg); padding: 4px; border-radius: 14px; }
+.seg button { border: 0; background: none; border-radius: 10px; padding: 8px 4px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 4px rgba(91,69,101,.12); }
+
+.stepper { display: flex; align-items: center; gap: 12px; }
+.stepper button { width: 38px; height: 38px; border: 0; border-radius: 12px; background: var(--primary-soft); color: var(--primary); font-family: var(--display); font-size: 20px; font-weight: 600; line-height: 1; }
+.stepper .num { font-size: 16px; min-width: 56px; text-align: center; }
+
+.pill { display: inline-flex; gap: 6px; align-items: center; justify-content: center; background: var(--mint); border-radius: 999px; padding: 10px 16px; }
+.progress { display: flex; gap: 6px; align-items: center; }
+.progress i { display: block; height: 8px; width: 8px; border-radius: 4px; background: var(--primary-soft); }
+.progress i.on { width: 28px; background: var(--primary); }
+
+.hero { display: grid; justify-items: center; text-align: center; gap: 6px; }
+.cat { display: block; }
+
+/* home */
+.price-card { border: 3px solid var(--primary-soft); text-align: left; width: 100%; cursor: pointer; }
+.price-card .num { font-size: 44px; line-height: 1.1; overflow-wrap: anywhere; }
+.result-head { display: flex; justify-content: space-between; gap: 8px; }
+.big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.big .num { font-size: 64px; line-height: 1; }
+.big .u { font-family: var(--display); font-weight: 500; font-size: 22px; }
+.rest { font-family: var(--display); font-weight: 500; font-size: 18px; }
+.bar { height: 12px; background: var(--surface); border-radius: 6px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--primary); border-radius: 6px; transition: width .35s ease; }
+.result-cat { position: absolute; right: 10px; top: 10px; width: 120px; height: 120px; }
+.polka { position: absolute; right: 18px; top: 18px; width: 90px; height: 60px; pointer-events: none;
+  background-image: radial-gradient(var(--surface) 3.5px, transparent 4px); background-size: 14px 14px; opacity: .9; }
+.with-cat { padding-right: 120px; }
+
+.list { display: grid; gap: 10px; }
+.item { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 20px; padding: 12px 16px 12px 12px; border: 0; width: 100%; text-align: left; }
+.item .ic { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex: none; }
+.item .t { flex: 1; min-width: 0; }
+.item .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .r { text-align: right; display: grid; justify-items: end; gap: 4px; }
+.item .time { font-family: var(--display); font-weight: 600; white-space: nowrap; }
+.badge { font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+.b-skip { background: var(--mint); } .b-buy { background: var(--primary-soft); color: var(--primary); } .b-later { background: var(--coin-soft); }
+.section-title { font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; }
+
+/* entry */
+.price-display { text-align: center; display: grid; gap: 0; }
+.price-display .row { justify-content: center; gap: 8px; }
+.price-display .num { font-size: 56px; line-height: 1.15; overflow-wrap: anywhere; }
+.caret { width: 3px; height: 44px; background: var(--primary); border-radius: 2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.live { display: flex; align-items: center; gap: 12px; background: var(--coin-soft); border-radius: 24px; padding: 8px 16px 8px 8px; }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.keypad button { border: 0; background: var(--surface); border-radius: 18px; height: 58px; font-family: var(--display); font-weight: 500; font-size: 24px; }
+.keypad button:active { background: var(--primary-soft); }
+.keypad .del { background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; }
+.name-input { background: var(--surface); border-radius: 18px; padding: 10px 16px; display: grid; }
+.name-input input { border: 0; outline: none; background: none; font-size: 16px; font-weight: 500; padding: 0; }
+
+/* result */
+.item-head { display: flex; align-items: center; gap: 14px; }
+.item-head .ic { width: 56px; height: 56px; border-radius: 18px; background: var(--primary-soft); display: grid; place-items: center; flex: none; }
+.item-head .t { min-width: 0; }
+.item-head .name { font-weight: 600; font-size: 18px; overflow-wrap: anywhere; }
+.dots { display: flex; flex-wrap: wrap; gap: 8px; }
+.dots i { width: 18px; height: 18px; border-radius: 50%; background: var(--primary); }
+.dots i.part { background: var(--coin); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat { background: var(--surface); border-radius: 22px; padding: 14px 16px; min-width: 0; }
+.stat .num { font-size: 22px; }
+
+/* history */
+.chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.chip { border: 0; border-radius: 999px; padding: 6px 14px; background: var(--surface); color: var(--muted); font-weight: 500; font-size: 13px; white-space: nowrap; }
+.chip[aria-pressed="true"] { background: var(--primary); color: #fff; font-weight: 600; }
+.later-actions { display: flex; gap: 6px; }
+.banner { display: flex; gap: 12px; align-items: center; background: var(--coin-soft); border-radius: 20px; padding: 12px 14px; border: 0; width: 100%; text-align: left; }
+.empty { text-align: center; display: grid; justify-items: center; gap: 4px; padding: 20px 0; }
+
+/* tabs */
+.tabs { position: fixed; z-index: 5; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; background: var(--surface);
+  border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, 1fr);
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.tabs button { border: 0; background: none; display: grid; justify-items: center; gap: 2px; font-size: 12px; color: var(--muted); padding: 4px; }
+.tabs button[aria-current="page"] { color: var(--primary); font-weight: 600; }
+.tabs svg { stroke: currentColor; }
+
+.toast { position: fixed; z-index: 10; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0;
+  background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-weight: 500; transition: .25s ease; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.confirm { display: grid; gap: 10px; background: var(--primary-soft); border-radius: 20px; padding: 14px; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="deco d1"></div><div class="deco d2"></div><div class="deco d3"></div>
+  <svg class="spark" style="right:58px;top:96px" width="24" height="24" viewBox="0 0 24 24"><path d="M12 0Q13.5 10.5 24 12Q13.5 13.5 12 24Q10.5 13.5 0 12Q10.5 10.5 12 0Z" fill="#FFCF70"/></svg>
+  <svg class="spark" style="right:28px;top:150px" width="13" height="13" viewBox="0 0 24 24"><path d="M12 0Q13.5 10.5 24 12Q13.5 13.5 12 24Q10.5 13.5 0 12Q10.5 10.5 12 0Z" fill="#EC6F9E"/></svg>
+  <main id="view" class="view"></main>
+  <nav class="tabs" id="tabs" aria-label="เมนูหลัก">
+    <button data-go="home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>แปลงเวลา</button>
+    <button data-go="history"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>ประวัติ</button>
+    <button data-go="settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg>ตั้งค่า</button>
+  </nav>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+(() => {
+"use strict";
+// ---------- storage ----------
+const KEY = "money-venture-v1";
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({ settings: S.settings, history: S.history, quick: S.quick })); } catch (e) {} };
+
+const saved = load();
+const S = {
+  settings: saved.settings || null,
+  history: saved.history || [],
+  quick: saved.quick || [["กาแฟเย็น", 60, "coffee"], ["ข้าวกะเพราไข่ดาว", 50, "food"], ["ตั๋วหนัง", 220, "ticket"]],
+  view: "home", step: 1, filter: "all", confirmClear: false,
+  draft: { name: "", price: "60" },
+  current: null,
+  form: null
+};
+const DEFAULTS = { type: "month", income: 13200, days: 22, start: "09:00", end: "18:00", brk: 1 };
+
+// ---------- math ----------
+const toMin = t => { const [h, m] = String(t || "0:0").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+function rates(s) {
+  let span = toMin(s.end) - toMin(s.start);
+  const overnight = span <= 0;
+  if (overnight) span += 1440;
+  const hpd = span / 60 - (Number(s.brk) || 0);
+  if (!(hpd > 0)) return { error: "เวลาพักต้องน้อยกว่าเวลาทำงาน", hpd, overnight };
+  const inc = Number(s.income) || 0;
+  if (!(inc > 0)) return { error: "ใส่รายได้ที่มากกว่า 0", hpd, overnight };
+  const days = Math.max(1, Number(s.days) || 22);
+  const perDay = s.type === "month" ? inc / days : s.type === "day" ? inc : inc * hpd;
+  const perHour = perDay / hpd;
+  return { hpd, perDay, perHour, perMin: perHour / 60, dpm: s.type === "month" ? days : 22, overnight };
+}
+// work-time breakdown, largest units first
+function breakdown(min, r) {
+  if (!(min > 0)) return [];
+  if (min < 1) return [[Math.max(1, Math.round(min * 60)), "วินาที"]];
+  const total = Math.round(min), dayMin = r.hpd * 60;
+  if (total < 60) return [[total, "นาที"]];
+  if (total < dayMin) return [[Math.floor(total / 60), "ชม."], [total % 60, "นาที"]].filter(p => p[0]);
+  const d = Math.floor(total / dayMin), rem = total - d * dayMin;
+  if (d < r.dpm) return [[d, "วัน"], [Math.floor(rem / 60), "ชม."], [Math.round(rem % 60), "นาที"]].filter(p => p[0]);
+  const months = total / dayMin / r.dpm;
+  if (months < 12) return [[Math.floor(months), "เดือน"], [Math.round((months % 1) * r.dpm), "วัน"]].filter(p => p[0]);
+  return [[Math.floor(months / 12), "ปี"], [Math.floor(months % 12), "เดือน"]].filter(p => p[0]);
+}
+const nf = (n, d = 0) => Number(n).toLocaleString("th-TH", { minimumFractionDigits: d, maximumFractionDigits: d });
+const nfx = n => Number(n).toLocaleString("th-TH", { maximumFractionDigits: 2 });
+const text = parts => parts.map(([n, u]) => `${nf(n)} ${u}`).join(" ");
+const shortText = parts => text(parts.slice(0, 2));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// ---------- art ----------
+// Mascot cat — same vectors as the Figma "Mascot / Cat" component.
+// k thickens the lines for small sizes, matching the Large / Medium / Small variants.
+const O = "#5B4565", BODY = "#FBBFD6", BLUSH = "#F48FB1";
+function catSVG(shocked, k = 1) {
+  const w = n => (n * k).toFixed(2);
+  const ears = `<path d="M58 92C50 64 50 34 62 24C80 32 100 50 108 62Z" fill="${BODY}" stroke="${O}" stroke-width="${w(6)}" stroke-linejoin="round"/>
+<path d="M182 92C190 64 190 34 178 24C160 32 140 50 132 62Z" fill="${BODY}" stroke="${O}" stroke-width="${w(6)}" stroke-linejoin="round"/>`;
+  const body = `<path d="M98 150C96 170 94 186 96 194C97 201 104 203 108 198C111 194 114 192 120 192C126 192 129 194 132 198C136 203 143 201 144 194C146 186 144 170 142 150Z" fill="${BODY}" stroke="${O}" stroke-width="${w(6)}" stroke-linejoin="round"/>`;
+  const head = `<path d="M120 56C163 56 192 80 192 111C192 140 162 158 120 158C78 158 48 140 48 111C48 80 77 56 120 56Z" fill="${BODY}" stroke="${O}" stroke-width="${w(6)}"/>`;
+  const whiskers = `<path d="M50 110L30 104M50 121L32 127M190 110L210 104M190 121L208 127" stroke="${O}" stroke-width="${w(5)}" stroke-linecap="round"/>`;
+  const blush = y => `<ellipse cx="78" cy="${y}" rx="12" ry="6.5" fill="${BLUSH}" fill-opacity=".8"/><ellipse cx="162" cy="${y}" rx="12" ry="6.5" fill="${BLUSH}" fill-opacity=".8"/>`;
+  if (!shocked) return `<svg class="cat" viewBox="0 0 240 240" fill="none" aria-hidden="true">
+<path d="M114 194C112 210 116 222 124 228C130 233 137 226 132 220C126 214 124 206 126 194Z" fill="${BODY}" stroke="${O}" stroke-width="${w(6)}" stroke-linejoin="round"/>
+${body}${ears}${head}${whiskers}
+<path d="M80 110Q92 99 104 110M136 110Q148 99 160 110" stroke="${O}" stroke-width="${w(6.5)}" stroke-linecap="round"/>${blush(127)}</svg>`;
+  return `<svg class="cat" viewBox="0 0 240 240" fill="none" aria-hidden="true">
+<path d="M106 18L100 7M120 15L119 1M134 18L140 7" stroke="${O}" stroke-width="${w(5)}" stroke-linecap="round"/>
+<path d="M142 176C158 177 170 170 176 158C180 150 191 151 190 161C188 179 168 190 144 190Z" fill="${BODY}" stroke="${O}" stroke-width="${w(6)}" stroke-linejoin="round"/>
+${body}${ears}${head}${whiskers}
+<circle cx="92" cy="106" r="15" fill="#fff" stroke="${O}" stroke-width="${w(5.5)}"/><circle cx="148" cy="106" r="15" fill="#fff" stroke="${O}" stroke-width="${w(5.5)}"/>
+<circle cx="92" cy="106" r="3.8" fill="${O}"/><circle cx="148" cy="106" r="3.8" fill="${O}"/>${blush(128)}
+<ellipse cx="120" cy="131" rx="6.5" ry="8" fill="${BLUSH}" stroke="${O}" stroke-width="${w(4)}"/></svg>`;
+}
+const lineBoost = size => size >= 140 ? 1 : size >= 90 ? 1.15 : size >= 56 ? 1.45 : 1.7;
+const CAT_HAPPY = catSVG(false, 1.15), CAT_SHOCKED = catSVG(true, 1.15); // Medium, used in result cards
+const cat = (shocked, size) => `<div style="width:${size}px;height:${size}px">${catSVG(shocked, lineBoost(size))}</div>`;
+
+const ICONS = {
+  coffee: '<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/>',
+  food: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/>',
+  bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>'
+};
+const icon = (k, size = 22) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#EC6F9E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k] || ICONS.bag}</svg>`;
+const SLOT = ["var(--primary-soft)", "var(--mint)", "var(--lavender)", "var(--sky)", "var(--coin-soft)"];
+const BACK = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`;
+
+// ---------- render helpers ----------
+const $view = document.getElementById("view");
+const $tabs = document.getElementById("tabs");
+function go(view) { S.view = view; S.confirmClear = false; render(); window.scrollTo(0, 0); }
+let toastTimer;
+function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200); }
+const priceNum = () => parseFloat(S.draft.price) || 0;
+
+function settingsFields(f, r) {
+  const unitLabel = { month: "รายได้ต่อเดือน", day: "รายได้ต่อวัน", hour: "รายได้ต่อชั่วโมง" }[f.type];
+  return `
+  <div class="card">
+    <div class="label" style="font-size:16px;font-weight:600;color:var(--ink)">รายได้</div>
+    <div class="seg" role="group" aria-label="ประเภทรายได้">
+      ${[["month", "ต่อเดือน"], ["day", "ต่อวัน"], ["hour", "ต่อชั่วโมง"]].map(([k, l]) => `<button data-type="${k}" aria-pressed="${f.type === k}">${l}</button>`).join("")}
+    </div>
+    <div class="field"><label for="f-income">${unitLabel} (ที่ได้รับจริงหลังหักภาษี)</label>
+      <div class="input"><input id="f-income" inputmode="decimal" autocomplete="off" value="${esc(f.income)}"><span class="unit">บาท</span></div></div>
+    ${f.type === "month" ? `<div class="row between"><div class="grow"><div style="font-weight:500">ทำงานเดือนละ</div><div class="small muted">ไม่นับวันหยุด</div></div>
+      <div class="stepper"><button data-step="days" data-d="-1" aria-label="ลดวัน">−</button><span class="num">${f.days} วัน</span><button data-step="days" data-d="1" aria-label="เพิ่มวัน">+</button></div></div>` : ""}
+  </div>`;
+}
+function hoursFields(f, r) {
+  return `
+  <div class="card">
+    <div class="label" style="font-size:16px;font-weight:600;color:var(--ink)">เวลาทำงาน</div>
+    <div class="row">
+      <div class="field grow"><label for="f-start">เข้างาน</label><div class="input"><input id="f-start" type="time" value="${esc(f.start)}"></div></div>
+      <div class="field grow"><label for="f-end">เลิกงาน</label><div class="input"><input id="f-end" type="time" value="${esc(f.end)}"></div></div>
+    </div>
+    <div class="row between"><div class="grow"><div style="font-weight:500">พักกลางวัน</div><div class="small muted">ไม่นับเป็นเวลาทำงาน</div></div>
+      <div class="stepper"><button data-step="brk" data-d="-0.5" aria-label="ลดเวลาพัก">−</button><span class="num">${nfx(f.brk)} ชม.</span><button data-step="brk" data-d="0.5" aria-label="เพิ่มเวลาพัก">+</button></div></div>
+    ${r.overnight && !r.error ? `<p class="small muted">กะข้ามคืน: นับเวลาต่อจากเที่ยงคืน</p>` : ""}
+  </div>`;
+}
+function summary(r) {
+  if (r.error) return `<p class="error" role="alert">${r.error}</p>`;
+  return `<div class="card mint" style="gap:2px"><div class="num" style="font-size:18px">คุณทำงานวันละ ${nfx(r.hpd)} ชั่วโมง</div>
+    <div class="small" style="font-weight:500">วันละ ${nf(r.perDay, r.perDay % 1 ? 2 : 0)} บาท · ชั่วโมงละ ${nf(r.perHour, 2)} บาท · นาทีละ ${nf(r.perMin, 2)} บาท</div></div>`;
+}
+
+// ---------- views ----------
+const V = {};
+V.onboard = () => {
+  const f = S.form, r = rates(f);
+  if (S.step === 1) return `
+    <div class="progress"><i class="on"></i><i></i><span class="small muted" style="margin-left:4px">ขั้นที่ 1 จาก 2</span></div>
+    <div class="hero">${cat(false, 150)}<h1>สวัสดี! เงินเดือนเท่าไหร่ดีน้า</h1>
+      <p class="muted small">ใช้คำนวณว่าของแต่ละชิ้น แลกด้วยเวลาทำงานเท่าไหร่<br>ข้อมูลเก็บไว้ในเครื่องคุณเท่านั้น</p></div>
+    ${settingsFields(f, r)}
+    ${r.perDay > 0 && f.type !== "hour" ? `<div class="pill"><span>เท่ากับวันละ</span><b class="num" style="font-size:15px">${nf(r.perDay, r.perDay % 1 ? 2 : 0)} บาท</b></div>` : ""}
+    <button class="btn" data-act="ob-next" ${Number(f.income) > 0 ? "" : "disabled"}>ถัดไป: ตั้งเวลางาน</button>`;
+  return `
+    <div class="progress"><i></i><i class="on"></i><span class="small muted" style="margin-left:4px">ขั้นที่ 2 จาก 2</span></div>
+    <div class="topbar"><button class="icon-btn" data-act="ob-back" aria-label="ย้อนกลับ">${BACK}</button>ย้อนกลับ</div>
+    <h1>ทำงานกี่โมงถึงกี่โมง?</h1>
+    ${hoursFields(f, r)}
+    ${summary(r)}
+    <button class="btn" data-act="ob-done" ${r.error ? "disabled" : ""}>เริ่มใช้งาน</button>`;
+};
+
+V.home = () => {
+  const r = rates(S.settings), p = priceNum(), min = p / r.perMin, parts = breakdown(min, r);
+  const days = min / (r.hpd * 60), shocked = days > 1;
+  const pct = Math.min(100, days * 100);
+  const due = S.history.filter(h => h.decision === "later" && Date.now() - h.ts > 864e5).length;
+  return `
+    <div><div class="brand">Money Venture</div><h1>ของชิ้นนี้ แลกด้วยเวลาทำงานเท่าไหร่?</h1></div>
+    ${due ? `<button class="banner" data-go="history">${cat(false, 44)}<span class="grow"><b>มี ${due} อย่างที่ขอคิดไว้</b><br><span class="small muted">ครบ 24 ชม.แล้ว ตัดสินใจได้หรือยัง?</span></span></button>` : ""}
+    <button class="card price-card" data-go="entry" aria-label="แก้ไขราคา">
+      <span class="label">${S.draft.name ? esc(S.draft.name) : "ราคาสินค้า"} · แตะเพื่อแก้</span>
+      <span class="row" style="align-items:baseline;gap:8px"><span class="num">${nf(p, p % 1 ? 2 : 0)}</span><span class="muted" style="font-size:18px">บาท</span></span>
+    </button>
+    <div class="card lav">
+      <div class="polka"></div><div class="result-cat">${shocked ? CAT_SHOCKED : CAT_HAPPY}</div>
+      <span class="label with-cat">ต้องทำงานแลก</span>
+      ${parts.length ? `<div class="big with-cat"><span class="num">${nf(parts[0][0])}</span><span class="u">${parts[0][1] === "วัน" ? "วันทำงาน" : parts[0][1]}</span></div>
+        ${parts.length > 1 ? `<div class="rest">${text(parts.slice(1))}</div>` : ""}` : `<p class="with-cat muted" style="min-height:64px">ใส่ราคาก่อนนะ แล้วน้องแมวจะคิดให้</p>`}
+      <div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div>
+      <div class="row between small muted"><span>${esc(S.settings.start)}</span><span>${esc(S.settings.end)}</span></div>
+      <p class="small muted">${p > 0 ? (days <= 1 ? `เท่ากับ ${nfx(Math.round(days * 1000) / 10)}% ของวันทำงาน ${nfx(r.hpd)} ชั่วโมง` : `มากกว่า 1 วันทำงานแล้วนะ!`) : `ชั่วโมงละ ${nf(r.perHour, 2)} บาท · นาทีละ ${nf(r.perMin, 2)} บาท`}</p>
+    </div>
+    <button class="btn" data-act="decide" ${p > 0 ? "" : "disabled"}>ดูผลและตัดสินใจ</button>
+    <div class="list">
+      <div class="section-title"><span>ลองเทียบของที่ซื้อบ่อย</span></div>
+      ${S.quick.map(([n, pr, ic], i) => `<button class="item" data-quick="${i}"><span class="ic" style="background:${SLOT[i % 5]}">${icon(ic)}</span>
+        <span class="t"><span class="name" style="display:block">${esc(n)}</span><span class="small muted">${nf(pr)} บาท</span></span>
+        <span class="r"><span class="small muted">ทำงาน</span><span class="time">${shortText(breakdown(pr / r.perMin, r))}</span></span></button>`).join("")}
+    </div>`;
+};
+
+V.entry = () => {
+  const r = rates(S.settings), p = priceNum(), min = p / r.perMin, parts = breakdown(min, r), shocked = min / (r.hpd * 60) > 1;
+  const shown = S.draft.price === "" ? "0" : (() => { const [i, d] = S.draft.price.split("."); return nf(Number(i) || 0) + (d !== undefined ? "." + d : ""); })();
+  return `
+    <div class="topbar"><button class="icon-btn" data-go="home" aria-label="ย้อนกลับ">${BACK}</button>แปลงราคา</div>
+    <label class="name-input" for="f-name"><span class="small muted">ชื่อของ (ไม่ใส่ก็ได้)</span><input id="f-name" maxlength="40" placeholder="เช่น รองเท้าวิ่ง" value="${esc(S.draft.name)}" autocomplete="off"></label>
+    <div class="price-display"><span class="muted small" style="font-weight:500">ราคา</span>
+      <div class="row"><span class="num" id="price-shown">${shown}</span><span class="caret"></span><span class="muted" style="font-size:20px">บาท</span></div></div>
+    <div class="live">${cat(shocked, 68)}<div class="grow" style="min-width:0">
+      <div class="small muted">ต้องทำงานแลก</div>
+      <div class="num" style="font-size:19px">${parts.length ? text(parts) : "–"}</div>
+      ${shocked ? `<div class="small" style="color:var(--primary);font-weight:500">เกิน 1 วันทำงานแล้วนะ!</div>` : ""}</div></div>
+    <div class="keypad" role="group" aria-label="แป้นตัวเลข">
+      ${["1","2","3","4","5","6","7","8","9",".","0"].map(k => `<button data-key="${k}">${k}</button>`).join("")}
+      <button class="del" data-key="del" aria-label="ลบ"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#EC6F9E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H10l-7-7Z"/><path d="m18 9-6 6M12 9l6 6"/></svg></button>
+    </div>
+    <button class="btn" data-act="decide" ${p > 0 ? "" : "disabled"}>ดูผลลัพธ์</button>`;
+};
+
+V.result = () => {
+  const c = S.current, r = rates(S.settings), parts = breakdown(c.minutes, r);
+  const totalDays = c.minutes / (r.hpd * 60), shocked = totalDays > 1;
+  let dots = "", dotLabel = "";
+  if (totalDays > 1) {
+    let n = totalDays, unit = "1 วันทำงาน";
+    if (n > 60) { n = totalDays / r.dpm; unit = `1 เดือน (ทำงาน ${r.dpm} วัน)`; }
+    if (n > 60) { n = totalDays / r.dpm / 12; unit = "1 ปี"; }
+    const full = Math.floor(n), part = n - full > 0.01, shownN = Math.min(60, full);
+    dots = `<div class="dots" aria-hidden="true">${"<i></i>".repeat(shownN)}${part && full < 60 ? '<i class="part"></i>' : ""}</div>${full > 60 ? `<p class="small muted">และอีก ${nf(full - 60)} จุด</p>` : ""}`;
+    dotLabel = `ทุกจุดคือ ${unit}`;
+  }
+  const hours = c.minutes / 60, cups = c.price / 60;
+  return `
+    <div class="topbar"><button class="icon-btn" data-go="entry" aria-label="ย้อนกลับ">${BACK}</button>ผลการคำนวณ</div>
+    <div class="item-head"><span class="ic">${icon(c.icon || "bag", 28)}</span><div class="t"><div class="name">${esc(c.name || "ของชิ้นนี้")}</div><div class="num muted" style="font-weight:500">${nf(c.price, c.price % 1 ? 2 : 0)} บาท</div></div></div>
+    <div class="card ${shocked ? "coin" : "lav"}" style="gap:4px">
+      <div class="polka"></div><div class="result-cat">${shocked ? CAT_SHOCKED : CAT_HAPPY}</div>
+      <span class="label with-cat">ต้องทำงานแลก</span>
+      <div class="big with-cat"><span class="num">${nf(parts[0][0])}</span><span class="u">${parts[0][1] === "วัน" ? "วันทำงาน" : parts[0][1]}</span></div>
+      ${parts.length > 1 ? `<div class="rest with-cat">กับอีก ${text(parts.slice(1))}</div>` : `<div class="rest with-cat">&nbsp;</div>`}
+      ${dots ? `<div style="margin-top:14px;display:grid;gap:10px">${dots}<p class="small muted">${dotLabel}</p></div>` : `<div style="margin-top:14px" class="bar"><i style="width:${Math.min(100, totalDays * 100)}%"></i></div><p class="small muted" style="margin-top:8px">เท่ากับ ${nfx(Math.round(totalDays * 1000) / 10)}% ของวันทำงาน</p>`}
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="small muted">ชั่วโมงทำงานรวม</div><div class="num">${nfx(Math.round(hours * 10) / 10)} ชม.</div></div>
+      <div class="stat"><div class="small muted">${cups >= 1 ? "เทียบเท่ากาแฟ 60 บาท" : "นาทีละ"}</div><div class="num">${cups >= 1 ? nf(Math.floor(cups)) + " แก้ว" : nf(r.perMin, 2) + " บาท"}</div></div>
+    </div>
+    <div style="display:grid;gap:8px">
+      <div style="font-weight:600">ตัดสินใจยังไงดี?</div>
+      <div class="row"><button class="btn secondary grow" data-decide="buy">ซื้อเลย</button><button class="btn grow" data-decide="skip">ไม่ซื้อแล้ว</button></div>
+      <button class="btn ghost" data-decide="later">ขอคิดก่อน · เตือนอีกทีพรุ่งนี้</button>
+    </div>`;
+};
+
+V.history = () => {
+  const r = rates(S.settings);
+  const now = new Date(); const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+  const skipped = S.history.filter(h => h.decision === "skip" && (() => { const d = new Date(h.ts); return `${d.getFullYear()}-${d.getMonth()}` === monthKey; })());
+  const savedMin = skipped.reduce((a, h) => a + h.minutes, 0), savedBaht = skipped.reduce((a, h) => a + h.price, 0);
+  const list = S.history.filter(h => S.filter === "all" || h.decision === S.filter).sort((a, b) => b.ts - a.ts);
+  const dayLabel = ts => { const d = new Date(ts), t = new Date(); const diff = Math.round((new Date(t.toDateString()) - new Date(d.toDateString())) / 864e5);
+    return diff === 0 ? "วันนี้" : diff === 1 ? "เมื่อวาน" : d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }); };
+  const groups = []; for (const h of list) { const l = dayLabel(h.ts); const g = groups.find(g => g.l === l); g ? g.items.push(h) : groups.push({ l, items: [h] }); }
+  const BADGE = { skip: ["b-skip", "ไม่ซื้อ"], buy: ["b-buy", "ซื้อแล้ว"], later: ["b-later", "ขอคิดก่อน"] };
+  return `
+    <h1>ประวัติ</h1>
+    <div class="card lav" style="gap:2px">
+      <div class="polka" style="top:auto;bottom:18px"></div><div class="result-cat" style="width:104px;height:104px">${CAT_HAPPY}</div>
+      <span class="label with-cat">เวลาที่ประหยัดได้เดือนนี้</span>
+      <div class="num with-cat" style="font-size:30px;line-height:1.25">${savedMin ? shortText(breakdown(savedMin, r)) : "0 นาที"}</div>
+      <p class="small muted with-cat">${skipped.length ? `จากของที่ไม่ซื้อ ${skipped.length} ชิ้น<br>เก็บเงินไว้ได้ ${nf(savedBaht)} บาท` : "กด “ไม่ซื้อแล้ว” เมื่อไหร่ เวลาจะมาสะสมตรงนี้"}</p>
+    </div>
+    <div class="chips" role="group" aria-label="กรองรายการ">
+      ${[["all", "ทั้งหมด"], ["skip", "ไม่ซื้อ"], ["buy", "ซื้อแล้ว"], ["later", "ขอคิดก่อน"]].map(([k, l]) => `<button class="chip" data-filter="${k}" aria-pressed="${S.filter === k}">${l}</button>`).join("")}
+    </div>
+    ${groups.length ? groups.map(g => `<div class="list"><div class="small muted" style="font-weight:600">${g.l}</div>
+      ${g.items.map((h, i) => `<div class="item"><span class="ic" style="background:${SLOT[(S.history.indexOf(h)) % 5]}">${icon(h.icon || "bag")}</span>
+        <span class="t"><span class="name" style="display:block">${esc(h.name || "ไม่มีชื่อ")}</span><span class="small muted">${nf(h.price, h.price % 1 ? 2 : 0)} บาท</span>
+          ${h.decision === "later" ? `<span class="later-actions" style="margin-top:6px"><button class="btn small secondary" data-redecide="${h.id}" data-to="buy">ซื้อ</button><button class="btn small" data-redecide="${h.id}" data-to="skip">ไม่ซื้อ</button></span>` : ""}</span>
+        <span class="r"><span class="time">${shortText(breakdown(h.minutes, r))}</span><span class="badge ${BADGE[h.decision][0]}">${BADGE[h.decision][1]}</span></span></div>`).join("")}</div>`).join("")
+      : `<div class="empty">${cat(false, 110)}<b>ยังไม่มีรายการ</b><span class="small muted">ลองแปลงราคาของสักชิ้น แล้วกดตัดสินใจดูนะ</span><button class="btn" style="margin-top:10px" data-go="entry">แปลงราคา</button></div>`}`;
+};
+
+V.settings = () => {
+  const f = S.form, r = rates(f);
+  return `
+    <div><h1>ตั้งค่ารายได้</h1><p class="small muted">ใช้คำนวณว่าเงินแต่ละบาท เท่ากับเวลาทำงานกี่นาที</p></div>
+    ${settingsFields(f, r)}${hoursFields(f, r)}${summary(r)}
+    <button class="btn" data-act="save" ${r.error ? "disabled" : ""}>บันทึกการตั้งค่า</button>
+    ${S.history.length ? (S.confirmClear
+      ? `<div class="confirm"><b>ลบประวัติทั้งหมด ${S.history.length} รายการ?</b><span class="small">ลบแล้วกู้คืนไม่ได้</span><div class="row"><button class="btn secondary grow" data-act="clear-no">ยกเลิก</button><button class="btn grow" style="background:var(--danger)" data-act="clear-yes">ลบเลย</button></div></div>`
+      : `<button class="btn ghost" data-act="clear">ล้างประวัติทั้งหมด</button>`) : ""}`;
+};
+
+function render() {
+  if (!S.settings) { S.view = "onboard"; if (!S.form) S.form = { ...DEFAULTS }; }
+  if ((S.view === "settings") && !S.form) S.form = { ...S.settings };
+  if (S.view === "result" && !S.current) S.view = "home";
+  const withTabs = ["home", "history", "settings"].includes(S.view);
+  $tabs.hidden = !withTabs;
+  $view.classList.toggle("no-tabs", !withTabs);
+  $tabs.querySelectorAll("button").forEach(b => b.dataset.go === S.view ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
+  $view.innerHTML = V[S.view]();
+}
+
+// ---------- actions ----------
+function startDecision() {
+  const r = rates(S.settings), p = priceNum();
+  if (!(p > 0)) return;
+  const q = S.quick.find(([n, pr]) => n === S.draft.name && pr === p);
+  S.current = { name: S.draft.name.trim(), price: p, minutes: p / r.perMin, icon: q ? q[2] : "bag" };
+  go("result");
+}
+function decide(decision) {
+  const c = S.current;
+  S.history.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: c.name, price: c.price, minutes: c.minutes, icon: c.icon, decision, ts: Date.now() });
+  persist();
+  S.filter = "all";
+  go("history");
+  toast(decision === "skip" ? "เก่งมาก! เก็บเวลาไว้ได้แล้ว" : decision === "buy" ? "บันทึกแล้ว ใช้ให้คุ้มนะ" : "โอเค พรุ่งนี้ค่อยคิดอีกที");
+}
+function keypad(k) {
+  let v = S.draft.price;
+  if (k === "del") v = v.slice(0, -1);
+  else if (k === ".") { if (!v.includes(".")) v = (v || "0") + "."; }
+  else {
+    if (v === "0") v = "";
+    const [i, d] = v.split(".");
+    if (d !== undefined ? d.length >= 2 : (i || "").length >= 9) return;
+    v += k;
+  }
+  S.draft.price = v;
+  render();
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const d = b.dataset;
+  if (d.go) return go(d.go);
+  if (d.key) return keypad(d.key);
+  if (d.type) { S.form.type = d.type; return render(); }
+  if (d.step) {
+    const f = S.form, step = Number(d.d);
+    if (d.step === "days") f.days = Math.min(31, Math.max(1, (Number(f.days) || 22) + step));
+    if (d.step === "brk") f.brk = Math.min(12, Math.max(0, (Number(f.brk) || 0) + step));
+    return render();
+  }
+  if (d.quick) { const [n, pr, ic] = S.quick[Number(d.quick)]; S.draft = { name: n, price: String(pr) }; return startDecision(); }
+  if (d.decide) return decide(d.decide);
+  if (d.filter) { S.filter = d.filter; return render(); }
+  if (d.redecide) { const h = S.history.find(h => h.id === d.redecide); if (h) { h.decision = d.to; h.ts = Date.now(); persist(); render(); toast(d.to === "skip" ? "เก่งมาก! เก็บเวลาไว้ได้แล้ว" : "บันทึกแล้ว"); } return; }
+  switch (d.act) {
+    case "ob-next": S.step = 2; return render();
+    case "ob-back": S.step = 1; return render();
+    case "ob-done": S.settings = { ...S.form }; S.form = null; persist(); toast("พร้อมแล้ว! ลองแปลงราคาดู"); return go("home");
+    case "decide": return startDecision();
+    case "save": S.settings = { ...S.form }; persist(); toast("บันทึกการตั้งค่าแล้ว"); S.form = null; return go("home");
+    case "clear": S.confirmClear = true; return render();
+    case "clear-no": S.confirmClear = false; return render();
+    case "clear-yes": S.history = []; persist(); S.confirmClear = false; toast("ลบประวัติแล้ว"); return render();
+  }
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.id === "f-name") { S.draft.name = t.value; return; }
+  if (!S.form) return;
+  if (t.id === "f-income") {
+    S.form.income = t.value.replace(/[^\d.]/g, "");
+    const r = rates(S.form);
+    // update dependent bits without re-rendering the focused input
+    const pill = $view.querySelector(".pill b"); if (pill && r.perDay > 0) pill.textContent = `${nf(r.perDay, r.perDay % 1 ? 2 : 0)} บาท`;
+    const next = $view.querySelector('[data-act="ob-next"]'); if (next) next.disabled = !(Number(S.form.income) > 0);
+    const sum = $view.querySelector(".card.mint, .error"); if (sum) sum.outerHTML = summary(r);
+    const save = $view.querySelector('[data-act="save"]'); if (save) save.disabled = !!r.error;
+  }
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (S.form && (t.id === "f-start" || t.id === "f-end")) { S.form[t.id === "f-start" ? "start" : "end"] = t.value; render(); }
+});
+document.addEventListener("keydown", e => {
+  if (S.view !== "entry" || e.target.tagName === "INPUT") return;
+  if (/^[0-9]$/.test(e.key)) keypad(e.key);
+  else if (e.key === "." || e.key === ",") keypad(".");
+  else if (e.key === "Backspace") keypad("del");
+  else if (e.key === "Enter") startDecision();
+});
+
+render();
+})();
+</script>
+</body>
+</html>
